@@ -17,11 +17,13 @@ jobs:
         with:
           node-version: 20
       - run: node build.js
+      - name: Rebuild browser bundle (in case src/core.js changed)
+        run: node scripts/build-browser.js
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add tld.json
+          git add tld.json tld.js
           if git diff --cached --quiet; then
             echo "No changes — TLD list is already current."
             exit 0

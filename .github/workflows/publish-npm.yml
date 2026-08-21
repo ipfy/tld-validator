@@ -1,0 +1,44 @@
+name: Ipfy TLD Validator — publish npm package
+
+on:
+  workflow_dispatch: {}
+  # Manual trigger only, on purpose. Unlike the weekly data refresh —
+  # which is just a git commit, trivially revertable — an npm publish
+  # is effectively permanent (unpublishing is restricted after 72
+  # hours). Requiring a manual click keeps that decision deliberate.
+  #
+  # If you'd rather this run fully hands-off on a schedule instead,
+  # replace this trigger with something like:
+  #   schedule:
+  #     - cron: '17 5 1 * *'   # 1st of the month, 05:17 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Bump version
+        run: npm version patch --no-git-tag-version
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Commit version bump and bundled data snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json data/tld.json
+          VERSION=$(node -p "require('./package.json').version")
+          git commit -m "chore: publish @ipfy/tld-validator v$VERSION"
+          git push
