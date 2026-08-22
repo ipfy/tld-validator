@@ -1,6 +1,6 @@
 {
   "name": "@ipfy/tld-validator",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Real-time TLD validation for domains and emails, from IANA's Root Zone Database. Bundled data with an opt-in live refresh.",
   "license": "MIT",
   "main": "index.js",
