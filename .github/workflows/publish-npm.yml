@@ -14,6 +14,13 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  # id-token: write is what enables npm Trusted Publishing (OIDC) — it
+  # lets this workflow prove its identity directly to npm at publish
+  # time, so no NPM_TOKEN secret is needed at all. Requires the
+  # Trusted Publisher to be configured once on the package's Settings
+  # page on npmjs.com (Organization: ipfy, Repository: tld-validator,
+  # Workflow filename: publish-npm.yml) — see README.
 
 jobs:
   publish:
@@ -23,16 +30,24 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Ensure npm is new enough for Trusted Publishing
+        run: npm install -g npm@latest
+        # OIDC support needs a recent npm CLI (11.5.1+). This guarantees
+        # it regardless of whatever npm version ships with the Node
+        # version above.
 
       - name: Bump version
         run: npm version patch --no-git-tag-version
 
       - name: Publish to npm
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # No NODE_AUTH_TOKEN here on purpose — authentication happens
+        # via GitHub's OIDC identity, verified against the Trusted
+        # Publisher configuration on npm's side. There is no stored
+        # secret for this step at all anymore.
 
       - name: Commit version bump and bundled data snapshot
         run: |
